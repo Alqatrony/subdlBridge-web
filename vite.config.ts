@@ -7,5 +7,5 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
-  base: '/subdlBridge/',
+  base: '/subdlBridge-web/',
 });
