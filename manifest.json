@@ -8,37 +8,37 @@
     "theme_color": "#ffffff",
     "icons": [
       {
-        "src": "/favicon-196x196.png",
+        "src": "./favicon-196x196.png",
         "sizes": "196x196",
         "type": "image/png"
       },
       {
-        "src": "/favicon-96x96.png",
+        "src": "./favicon-96x96.png",
         "sizes": "96x96",
         "type": "image/png"
       },
       {
-        "src": "/favicon-32x32.png",
+        "src": "./favicon-32x32.png",
         "sizes": "32x32",
         "type": "image/png"
       },
       {
-        "src": "/favicon-16x16.png",
+        "src": "./favicon-16x16.png",
         "sizes": "16x16",
         "type": "image/png"
       },
       {
-        "src": "/favicon-128.png",
+        "src": "./favicon-128.png",
         "sizes": "128x128",
         "type": "image/png"
       },
       {
-        "src": "/apple-touch-icon-144x144.png",
+        "src": "./apple-touch-icon-144x144.png",
         "sizes": "144x144",
         "type": "image/png"
       },
       {
-        "src": "/apple-touch-icon-152x152.png",
+        "src": "./apple-touch-icon-152x152.png",
         "sizes": "152x152",
         "type": "image/png",
         "purpose": "any maskable"
@@ -46,13 +46,13 @@
     ],
     "screenshots": [
       {
-        "src": "/screenshot-desktop.png",
+        "src": "./screenshot-desktop.png",
         "sizes": "1280x720",
         "type": "image/png",
         "form_factor": "wide"
       },
       {
-        "src": "/screenshot-mobile.png",
+        "src": "./screenshot-mobile.png",
         "sizes": "750x1334",
         "type": "image/png",
         "form_factor": "narrow"
