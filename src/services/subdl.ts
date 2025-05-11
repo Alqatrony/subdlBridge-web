@@ -23,6 +23,7 @@ export type SubDLResponse = {
   subtitles: RawSubtitleData[]
   currentPage: number
   totalPages: number
+  total?: number
 }
 
 const ENV_KEY = import.meta.env.VITE_SUBDL_KEY ?? ''
@@ -34,12 +35,13 @@ export async function searchSubDL(params: Record<string, string | number>): Prom
     
     // Set default pagination parameters if not provided
     if (!('page' in params)) params.page = 1
-    if (!('subs_per_page' in params)) params.subs_per_page = 50
+    if (!('subs_per_page' in params)) params.subs_per_page = 30
     
     Object.entries(params).forEach(([k, v]) => {
       if (v) url.searchParams.append(k, String(v))
     })
     
+    console.log('Fetching from URL:', url.toString())
     const res = await fetch(url.toString())
     if (!res.ok) {
         const text = await res.text()
@@ -47,9 +49,13 @@ export async function searchSubDL(params: Record<string, string | number>): Prom
     }
     
     const data = await res.json()
+    console.log('Raw API response:', data)
+    
+    // Extract pagination information directly from the API response
     return {
       subtitles: data.subtitles || [],
-      currentPage: Number(params.page),
-      totalPages: Math.ceil((data.total || data.subtitles?.length || 0) / Number(params.subs_per_page))
+      currentPage: data.currentPage || Number(params.page),
+      totalPages: data.totalPages || 1,
+      total: data.total
     }
 }

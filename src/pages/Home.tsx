@@ -1,5 +1,5 @@
 // Home.tsx
-import { useState } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import Navbar from '../components/Navbar'
 import SearchBar from '../components/SearchBar'
 import SubtitleCard from '../components/SubtitleCard'
@@ -17,11 +17,13 @@ export default function Home() {
   const [error, setError] = useState('')
   const [pagination, setPagination] = useState({
     currentPage: 0,
-    totalPages: 0
+    totalPages: 0,
+    totalItems: 0
   })
   const [searchParams, setSearchParams] = useState<Record<string, string | number> | null>(null)
   const { user } = useAuth()
   const subList = useSubList() // Get the current user's subtitle list
+  const observerTarget = useRef<HTMLDivElement>(null)
 
   const addSub = async (s: SubtitleResult) => {
     if (!user) { alert('Login first'); return }
@@ -47,7 +49,9 @@ export default function Home() {
     setError('')
     
     try {
+      console.log('Searching with params:', params)
       const response = await searchSubDL(params)
+      console.log('Got response:', response)
       
       // Process the subtitles to add download links and extract IDs
       const processedSubs = (response.subtitles || []).map(s => {
@@ -66,7 +70,8 @@ export default function Home() {
       // Update pagination information
       setPagination({
         currentPage: response.currentPage,
-        totalPages: response.totalPages
+        totalPages: response.totalPages,
+        totalItems: response.total || 0
       })
       
       // Store search parameters for "Load More" functionality
@@ -74,6 +79,7 @@ export default function Home() {
       
     } catch (err) {
       setError((err as Error).message)
+      console.error('Search error:', err)
     } finally {
       setLoading(false)
     }
@@ -84,15 +90,59 @@ export default function Home() {
     performSearch({ ...params, page: 1 }, true)
   }
 
-  const loadMore = () => {
-    if (!searchParams || loading || pagination.currentPage >= pagination.totalPages) return
+  const loadMore = useCallback(() => {
+    if (!searchParams || loading || pagination.currentPage >= pagination.totalPages) {
+      console.log('Skipping loadMore:', { 
+        noSearchParams: !searchParams, 
+        isLoading: loading, 
+        currentPage: pagination.currentPage, 
+        totalPages: pagination.totalPages 
+      })
+      return
+    }
     
+    console.log('Loading next page:', pagination.currentPage + 1)
     // Load the next page of results
     performSearch({
       ...searchParams,
       page: pagination.currentPage + 1
     }, false)
-  }
+  }, [searchParams, loading, pagination.currentPage, pagination.totalPages])
+
+  // Set up intersection observer for infinite scrolling
+  useEffect(() => {
+    if (!observerTarget.current) return
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries
+        console.log('Intersection observed:', entry.isIntersecting)
+        if (entry.isIntersecting && !loading && pagination.currentPage < pagination.totalPages) {
+          loadMore()
+        }
+      },
+      {
+        root: null, // viewport
+        rootMargin: '400px', // Load more when within 400px of the bottom
+        threshold: 0.1 // Trigger when at least 10% visible
+      }
+    )
+
+    const currentTarget = observerTarget.current
+    if (currentTarget) {
+      console.log('Setting up observer on element:', currentTarget)
+      observer.observe(currentTarget)
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget)
+      }
+    }
+  }, [loadMore, loading, pagination])
+
+  // Determine if there are more results to load
+  const hasMoreResults = pagination.currentPage < pagination.totalPages
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
@@ -140,7 +190,7 @@ export default function Home() {
                 Search Results
               </h2>
               <span className="px-2.5 py-0.5 bg-gray-200 text-gray-800 text-xs font-medium rounded-full dark:bg-gray-700 dark:text-gray-300">
-                {results.length} found
+                {results.length} of {pagination.totalItems || 'many'} found
               </span>
             </div>
             
@@ -155,15 +205,39 @@ export default function Home() {
               ))}
             </div>
             
-            {/* Load More Button */}
-            {pagination.currentPage < pagination.totalPages && (
-              <div className="mt-8 flex justify-center">
+            {/* Pagination status indicator */}
+            <div className="text-center text-sm text-gray-500 dark:text-gray-400 py-2">
+              {loading ? 'Loading...' : (
+                hasMoreResults ? 
+                  `Showing ${results.length} of ${pagination.totalItems} results (Page ${pagination.currentPage} of ${pagination.totalPages})` : 
+                  'All results loaded'
+              )}
+            </div>
+            
+            {/* Infinite scroll observer element - only render if more results exist */}
+            {hasMoreResults && (
+              <div 
+                ref={observerTarget} 
+                className="py-8 flex justify-center"
+                style={{ minHeight: '100px' }}
+              >
+                {loading && (
+                  <div className="flex items-center justify-center">
+                    <div className="w-8 h-8 border-4 border-t-4 border-gray-200 border-t-primary-600 rounded-full animate-spin"></div>
+                    <span className="ml-3 text-gray-600 dark:text-gray-300">Loading more results...</span>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Fallback load more button */}
+            {hasMoreResults && !loading && (
+              <div className="mt-4 mb-8 flex justify-center">
                 <button
                   onClick={loadMore}
-                  disabled={loading}
-                  className="w-full max-w-md bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center text-white dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 disabled:bg-gray-400 disabled:dark:bg-gray-600 disabled:cursor-not-allowed"
+                  className="bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center text-white dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
                 >
-                  {loading ? 'Loading...' : `Load More (${pagination.currentPage} / ${pagination.totalPages})`}
+                  Load more results
                 </button>
               </div>
             )}
