@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => {
         }
       }),
     ],
-    base: '/subdlBridge-web/',
+    base: '/',
     define: {
       'process.env': env,
     },
