@@ -1,6 +1,6 @@
 // Login.tsx
 import { useState } from 'react'
-import { signInWithEmailAndPassword } from 'firebase/auth'
+import { signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence } from 'firebase/auth'
 import { auth } from '../services/firebase'
 import { Link, useNavigate } from 'react-router-dom'
 import { FirebaseError } from 'firebase/app'
@@ -13,6 +13,7 @@ export default function Login() {
   const [pass, setPass] = useState('')
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
+  const [rememberMe, setRememberMe] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -20,6 +21,11 @@ export default function Login() {
     setLoading(true)
 
     try {
+      // Set persistence based on "Remember me" checkbox
+      const persistenceType = rememberMe ? browserLocalPersistence : browserSessionPersistence
+      await setPersistence(auth, persistenceType)
+      
+      // Then sign in
       await signInWithEmailAndPassword(auth, email, pass)
       navigate('/')
     } catch (e: unknown) {
@@ -96,6 +102,8 @@ export default function Login() {
                     <input
                       id="remember"
                       type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
                       className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-primary-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-primary-600 dark:ring-offset-gray-800"
                     />
                   </div>
