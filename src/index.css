@@ -22,6 +22,10 @@ html {
   }
 }
 
+@media (prefers-color-scheme:dark){
+  html {           background-color:#1e2939; }
+}
+
 @theme {
   --color-primary-50 : #eef2ff;
   --color-primary-100: #e0e7ff;
