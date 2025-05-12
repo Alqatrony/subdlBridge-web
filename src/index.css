@@ -1,6 +1,28 @@
 /* index.css */
 @import "tailwindcss";
 
+/* iOS status bar and safe area handling */
+:root {
+  --safe-area-inset-top: env(safe-area-inset-top);
+}
+
+body {
+  padding-top: var(--safe-area-inset-top);
+  /* Ensure content goes full width/height */
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
+
+html {
+  height: -webkit-fill-available;
+}
+
+/* Remove top padding for PWA mode */
+@media all and (display-mode: standalone) {
+  body {
+    background-color: #1e2939; /* Match your app's dark background color */
+  }
+}
 
 @theme {
   --color-primary-50 : #eef2ff;
