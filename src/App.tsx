@@ -10,7 +10,7 @@ import './index.css'
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/subdlBridge-web">
       <Routes>
         {/* Public Routes */}
         <Route path="/register" element={<Register />} />
