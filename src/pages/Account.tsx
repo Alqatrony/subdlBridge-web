@@ -36,6 +36,7 @@ export default function Account() {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [tokenCopied, setTokenCopied] = useState(false)
+  const [userIdCopied, setUserIdCopied] = useState(false)
 
   const LANGS = ['en', 'ar', 'fr', 'es', 'de', 'it', 'pt', 'ru', 'ja', 'zh']
 
@@ -80,6 +81,24 @@ export default function Account() {
         setMessage({
           type: 'error',
           text: 'Failed to copy token to clipboard. Please try manually selecting and copying.'
+        })
+      })
+  }
+
+  // Copy user ID to clipboard
+  const copyUserIdToClipboard = () => {
+    if (!user) return;
+    
+    navigator.clipboard.writeText(user.uid)
+      .then(() => {
+        setUserIdCopied(true)
+        setTimeout(() => setUserIdCopied(false), 3000)
+      })
+      .catch(error => {
+        console.error('Error copying user ID to clipboard:', error)
+        setMessage({
+          type: 'error',
+          text: 'Failed to copy user ID to clipboard. Please try manually selecting and copying.'
         })
       })
   }
@@ -297,6 +316,37 @@ export default function Account() {
                   </button>
                 </div>
               )}
+
+              {/* User ID display section */}
+              <div className="mt-4">
+                <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                  Your User ID:
+                </p>
+                {!user ? (
+                  <div className="animate-pulse flex space-x-4">
+                    <div className="flex-1 space-y-3 py-1">
+                      <div className="h-8 bg-gray-200 rounded dark:bg-gray-700"></div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex-1 relative">
+                      <input
+                        type="text"
+                        value={user.uid}
+                        readOnly
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      />
+                    </div>
+                    <button
+                      onClick={copyUserIdToClipboard}
+                      className="inline-flex items-center justify-center text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
+                    >
+                      {userIdCopied ? 'Copied!' : 'Copy to Clipboard'}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

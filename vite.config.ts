@@ -1,3 +1,5 @@
+// vite.config.ts
+import critical from 'rollup-plugin-critical';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
@@ -39,6 +41,16 @@ export default defineConfig(({ mode }) => {
           ]
         }
       }),
+      
+      mode === 'production' &&
+        critical({
+          criticalBase: 'dist/',
+          criticalUrl : '/',
+          criticalPages: [{ uri: 'index.html', template: 'index' }],
+          inline      : true,
+          width       : 1300,
+          height      : 900,
+        }),
     ],
     base: '/subdlBridge-web',
     define: {

@@ -1,8 +1,9 @@
 // Home.tsx
+import React from 'react'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Navbar from '../components/Navbar'
 import SearchBar from '../components/SearchBar'
-import SubtitleCard from '../components/SubtitleCard'
+const SubtitleCard = React.lazy(() => import('../components/SubtitleCard'))
 import type { SubtitleResult } from '../services/subdl'
 import { searchSubDL } from '../services/subdl'
 import { useAuth } from '../hooks/useAuth'
