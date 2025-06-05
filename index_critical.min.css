@@ -1,0 +1,1 @@
+:root{--safe-area-inset-top:env(safe-area-inset-top)}body{min-height:100dvh;padding-top:var(--safe-area-inset-top)}html{height:-webkit-fill-available}@media (display-mode:standalone){body{background-color:#1e2939}}@media (prefers-color-scheme:dark){html{background-color:#1e2939}}
