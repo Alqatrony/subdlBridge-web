@@ -1,7 +1,7 @@
 // Account.tsx
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { doc, getDoc, setDoc, deleteDoc, writeBatch, serverTimestamp } from 'firebase/firestore'
+import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore'
 import { updateEmail, updatePassword, deleteUser, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
 import { v4 as uuidv4 } from 'uuid'
 import { db } from '../services/firebase'
@@ -37,8 +37,46 @@ export default function Account() {
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [tokenCopied, setTokenCopied] = useState(false)
   const [userIdCopied, setUserIdCopied] = useState(false)
+  const [tokenRegenerating, setTokenRegenerating] = useState(false)
 
   const LANGS = ['en', 'ar', 'fr', 'es', 'de', 'it', 'pt', 'ru', 'ja', 'zh']
+
+  // Load or generate token 
+  // Defined with useCallback to prevent unnecessary re-renders
+  const loadOrGenerateToken = useCallback(async () => {
+    if (!user) return
+
+    setTokenLoading(true)
+
+    try {
+      // Check for auth token
+      const authDoc = await getDoc(doc(db, 'users', user.uid, 'settings', 'auth'))
+
+      if (authDoc.exists()) {
+        // Token already exists, use it
+        const authData = authDoc.data() as AuthSettings
+        setToken(authData.token)
+      } else {
+        // Generate a new token
+        const newToken = uuidv4()
+
+        // Save token to user's settings
+        await setDoc(doc(db, 'users', user.uid, 'settings', 'auth'), {
+          token: newToken
+        })
+
+        setToken(newToken)
+      }
+    } catch (error) {
+      console.error('Error loading or generating token:', error)
+      setMessage({
+        type: 'error',
+        text: 'Failed to generate your authentication token. Please try again later.'
+      })
+    } finally {
+      setTokenLoading(false)
+    }
+  }, [user, setToken, setMessage, setTokenLoading])
 
   // Load user data
   useEffect(() => {
@@ -67,7 +105,7 @@ export default function Account() {
     }
 
     loadUserData()
-  }, [user])
+  }, [user, loadOrGenerateToken])
 
   // Copy token to clipboard
   const copyTokenToClipboard = () => {
@@ -216,49 +254,36 @@ export default function Account() {
     }
   }
 
-  // Updated loadOrGenerateToken function
-  // Load or generate token
-  const loadOrGenerateToken = async () => {
+  // Regenerate token
+  const regenerateToken = async () => {
     if (!user) return
-
-    setTokenLoading(true)
-
+    
+    setTokenRegenerating(true)
+    setMessage({ type: '', text: '' })
+    
     try {
-      const authDoc = await getDoc(doc(db, 'users', user.uid, 'settings', 'auth'))
-
-      if (authDoc.exists()) {
-        // Token already exists, use it
-        const authData = authDoc.data() as AuthSettings
-        setToken(authData.token)
-      } else {
-        // Generate a new token
-        const newToken = uuidv4()
-
-        // Use a batch to ensure both operations succeed or fail together
-        const batch = writeBatch(db)
-
-        // Save token to user's settings
-        batch.set(doc(db, 'users', user.uid, 'settings', 'auth'), {
-          token: newToken
-        })
-
-        // Create token lookup document
-        batch.set(doc(db, 'tokens', newToken), {
-          uid: user.uid,
-          createdAt: serverTimestamp()
-        })
-
-        await batch.commit()
-        setToken(newToken)
-      }
+      // Generate a new UUID token
+      const newToken = uuidv4()
+      
+      // Save new token to user's settings
+      await setDoc(doc(db, 'users', user.uid, 'settings', 'auth'), {
+        token: newToken
+      })
+      
+      setToken(newToken)
+      
+      setMessage({
+        type: 'success',
+        text: 'Your API key has been regenerated successfully!'
+      })
     } catch (error) {
-      console.error('Error loading or generating token:', error)
+      console.error('Error regenerating token:', error)
       setMessage({
         type: 'error',
-        text: 'Failed to generate your authentication token. Please try again later.'
+        text: 'Failed to generate your API key. Please try again later.'
       })
     } finally {
-      setTokenLoading(false)
+      setTokenRegenerating(false)
     }
   }
 
@@ -316,6 +341,17 @@ export default function Account() {
                   </button>
                 </div>
               )}
+
+              {/* Regenerate Token Button */}
+              <div className="mt-4">
+                <button
+                  onClick={regenerateToken}
+                  disabled={tokenRegenerating}
+                  className="text-sm text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg px-4 py-2 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                >
+                  {tokenRegenerating ? 'Generating...' : 'Generate New API Key'}
+                </button>
+              </div>
 
               {/* User ID display section */}
               <div className="mt-4">
