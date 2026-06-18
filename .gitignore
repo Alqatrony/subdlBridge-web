@@ -29,7 +29,9 @@ dist/
 
 # Firebase env
 
-web/.env.local
+.env
+.env.local
+.env.*.local
 # IDE
 
 .vscode/

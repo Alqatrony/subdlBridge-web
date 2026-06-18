@@ -31,10 +31,11 @@ export default function Home() {
     
     setIsAdding(s.url)
     try {
+      const cleanUrl = s.url.split('?')[0]
       await addDoc(collection(db, 'users', user.uid, 'subs'), {
-        url: s.url, 
+        url: cleanUrl, 
         lang: s.lang, 
-        title: s.name || s.release_name || `Subtitle ${s.subtitle_id || s.sd_id || ''}`,
+        title: s.release_name || s.name || `Subtitle ${s.subtitle_id || s.sd_id || ''}`,
         addedAt: Date.now()
       })
       // Add to the list of added subtitles
@@ -56,10 +57,12 @@ export default function Home() {
       
       // Process the subtitles to add download links and extract IDs
       const processedSubs = (response.subtitles || []).map(s => {
-        const match = s.url.match(/subtitle\/(\d+)-(\d+)\.zip/)
+        const cleanUrl = s.url.split('?')[0]
+        const match = cleanUrl.match(/subtitle\/(\d+)-(\d+)\.zip/)
         return {
           ...s,
-          download_link: `https://dl.subdl.com${s.url}`,
+          url: cleanUrl,
+          download_link: `https://dl.subdl.com${cleanUrl}`,
           sd_id: match ? Number(match[1]) : undefined,
           subtitle_id: match ? Number(match[2]) : undefined,
         } as SubtitleResult
